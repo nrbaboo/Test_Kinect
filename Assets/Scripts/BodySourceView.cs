@@ -13,6 +13,8 @@ public class BodySourceView : MonoBehaviour
     public Text debugText;
     public Text debugText2;
     public Text debugText3;
+    public GameObject spear;
+    public GameObject target;
 
     public Text debugText4;
     public Text debugText5;
@@ -147,11 +149,11 @@ public class BodySourceView : MonoBehaviour
             jointObj2.localPosition = GetVector3FromJoint(sourceJoint);
             if (startPositonBody)
             {
-                if (jt.Equals(Kinect.JointType.AnkleLeft))
+                if (jt.Equals(Kinect.JointType.FootLeft))
                 {
                     start_AnkleLeft_z = jointObj2.localPosition.z;
                 }
-                if (jt.Equals(Kinect.JointType.AnkleRight))
+                if (jt.Equals(Kinect.JointType.FootRight))
                 {
                     start_AnkleRight_z = jointObj2.localPosition.z;
                 }
@@ -165,9 +167,10 @@ public class BodySourceView : MonoBehaviour
     float start_AnkleLeft_z, start_AnkleLeft_y;
     float start_AnkleRight_z, start_AnkleRight_y;
     float max_AnkleLeft_y = 0, max_AnkleRight_y = 0;
-    
-
-
+    //update
+    float currentZAnkleRight, currentZAnkleLeft;
+    float currentYAnkleRight, currentYAnkleLeft;
+    float distanceLeft;
     private void RefreshBodyObject(Kinect.Body body, GameObject bodyObject)
     {
         for (Kinect.JointType jt = Kinect.JointType.SpineBase; jt <= Kinect.JointType.ThumbRight; jt++)
@@ -192,37 +195,44 @@ public class BodySourceView : MonoBehaviour
                 lr.SetColors(GetColorForState (sourceJoint.TrackingState), GetColorForState(targetJoint.Value.TrackingState));
 
                 // Left
-                if (jt.Equals(Kinect.JointType.AnkleLeft))
+                if (jt.Equals(Kinect.JointType.FootLeft))
                 {
-                    if(firstYLeft)
+                   /* if(firstYLeft)
                     {
                         start_AnkleLeft_y = GetVector3FromJoint(targetJoint.Value).y;
                         max_AnkleLeft_y = start_AnkleLeft_y;
                         firstYLeft = false;
-                    }
-                    float valueDifZLeft = start_AnkleLeft_z - GetVector3FromJoint(targetJoint.Value).z;
-                    float valueDifYLeft = start_AnkleLeft_y - GetVector3FromJoint(targetJoint.Value).y;
+                    }*/
+                    currentZAnkleLeft = GetVector3FromJoint(targetJoint.Value).z;
+                    currentYAnkleLeft = GetVector3FromJoint(targetJoint.Value).y;    
+                    float valueDifZLeft = start_AnkleRight_z - currentZAnkleLeft;
+                    float valueDifYLeft = currentYAnkleRight - currentYAnkleLeft;
+                    distanceLeft = Mathf.Sqrt(valueDifZLeft* valueDifZLeft + valueDifYLeft * valueDifYLeft);
+                    debugText.text = "current Y Left" + currentYAnkleLeft.ToString();
+                        debugText2.text = "current Y Right" + currentYAnkleRight.ToString(); // 
+                        debugText3.text = "Dif Y " + valueDifYLeft.ToString(); //
 
-                    debugText.text = start_AnkleLeft_y.ToString();
-                        debugText2.text = max_AnkleLeft_y.ToString(); // 
-                        debugText3.text = valueDifYLeft.ToString(); //
+                        debugText4.text = "Dif Z " + valueDifZLeft.ToString();
+                        debugText5.text = "Current Z " + jointObj.localPosition.z.ToString();
+                        debugText6.text = "Start Z "+(start_AnkleLeft_z).ToString();
 
-                        debugText4.text = start_AnkleLeft_z.ToString();
-                        debugText5.text = jointObj.localPosition.z.ToString();
-                        debugText6.text = (start_AnkleLeft_z - GetVector3FromJoint(targetJoint.Value).z).ToString();
-
-                    if (valueDifZLeft < 1.5)
+                    if (valueDifZLeft < 0.5)
                     {
                         startPointLeft = true;
                     }
 
-                    if (max_AnkleLeft_y < GetVector3FromJoint(targetJoint.Value).y && startPointLeft)
+                   
+                    spear.transform.position= new Vector3(GetVector3FromJoint(targetJoint.Value).x, currentYAnkleLeft,currentZAnkleLeft);
+
+
+                    /* if (max_AnkleLeft_y < GetVector3FromJoint(targetJoint.Value).y && startPointLeft)
+                     {
+                         max_AnkleLeft_y = GetVector3FromJoint(targetJoint.Value).y;
+                     }*/
+                    //if (max_AnkleLeft_y - start_AnkleLeft_y > talToMove)
+                    if (startPointLeft)
                     {
-                        max_AnkleLeft_y = GetVector3FromJoint(targetJoint.Value).y;
-                    }
-                    if (max_AnkleLeft_y - start_AnkleLeft_y > talToMove)
-                    {
-                        if (valueDifZLeft > 2.5 && valueDifYLeft > -0.5)
+                        if (valueDifZLeft > 2.6 && valueDifYLeft > -1)
                         {
                             img.enabled = true;
                             startPointLeft = false;
@@ -232,14 +242,14 @@ public class BodySourceView : MonoBehaviour
                         {
                             img.enabled = false;
                             tuchLeft = false;
-                            max_AnkleLeft_y = start_AnkleLeft_y;
+                           // max_AnkleLeft_y = start_AnkleLeft_y;
                         }
                         
                     }
                     
                 }
                 // Right
-                if (jt.Equals(Kinect.JointType.AnkleRight))
+                if (jt.Equals(Kinect.JointType.FootRight))
                 {
                     if (firstYRight)
                     {
@@ -248,8 +258,11 @@ public class BodySourceView : MonoBehaviour
                         firstYRight = false;
                     }
 
+                    currentZAnkleRight = GetVector3FromJoint(targetJoint.Value).z;
+                    currentYAnkleRight = GetVector3FromJoint(targetJoint.Value).y;
+                    float valuDifzRight = start_AnkleRight_z - currentZAnkleRight;
 
-                    float valuDifzRight = start_AnkleRight_z - GetVector3FromJoint(targetJoint.Value).z;
+                    target.transform.position = new Vector3(GetVector3FromJoint(targetJoint.Value).x, currentYAnkleRight, start_AnkleRight_z - 2.6f);
                     if (valuDifzRight < 1.5)
                     {
                         startPointRight = true;
@@ -261,7 +274,7 @@ public class BodySourceView : MonoBehaviour
                     }
                     if (max_AnkleRight_y - start_AnkleRight_y > talToMove)
                     {
-                        if (valuDifzRight > 2.5)
+                       /* if (valuDifzRight > 2.5)
                         {
                             img2.enabled = true;
                             startPointRight = false;
@@ -272,7 +285,7 @@ public class BodySourceView : MonoBehaviour
                             img2.enabled = false;
                             tuchRight = false;
                             max_AnkleRight_y = start_AnkleRight_y;
-                        }
+                        }*/
 
                     }
 
